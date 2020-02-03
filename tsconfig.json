@@ -3,9 +3,13 @@
     "module": "commonjs",
     "target": "es6",
     "sourceMap": true,
-    "lib": ["es2017", "dom"]
+    "lib": ["es2017", "dom"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
-  "include": ["index.ts"],
+  "include": [
+    "src"
+  ],
   "exclude": [
     "node_modules"
   ]

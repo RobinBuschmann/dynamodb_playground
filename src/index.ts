@@ -6,6 +6,52 @@ const dynamoDB = new DynamoDB({
   region: 'eu-central-1',
 });
 
+/*
+
+{
+  id: '1,
+  email: 'test@email',
+  __model: 'User',
+},
+{
+  id: '2,
+  email: 'test@email',
+  __model: 'User',
+},
+{
+  id: '5678',
+  userId: '1',
+  __model: 'Document',
+},
+{
+  documentId: '5678',
+  userId: '2',
+  shareState: 'PENDING',
+  __model: 'SharedDocument',
+}
+
+{
+  attributes: {
+    id: {
+      type: 'string',
+      primaryKey: true,
+    },
+    email: {
+      type: 'string',
+    },
+    documents: {
+      type: Document,
+      multi: true,
+      foreignKey: 'documentId',
+    },
+    __model: {
+      type: 'string',
+    }
+  }
+}
+
+ */
+
 
 const main = async () => {
   try {
@@ -17,18 +63,33 @@ const main = async () => {
           ':secondKey': `USER#${email}`,
         },
         multi: false,
-      }),
+        include: {
+          Documents: {
+
+          }
+        },
+      } as const),
+      getByEmail2: ({email}) => ({
+        indexName: 'GSI1',
+        keyCondition: {
+          secondKey: `USER#${email}`,
+        },
+        filterCondition: {
+
+        },
+      } as const),
       getById: ({id}) => ({
-        keyConditionExpression: 'firstKey = :firstKey',
+        keyConditionExpression: `firstKey = :firstKey`,
         expressionAttributeValues: {
           ':firstKey': `USER#${id}`,
         },
         multi: false,
-      }),
+      } as const),
     });
 
     // await createUser({id: 1, email: 'rob@email.de'});
-    const user = await userRepository.getByEmail({email: 'rob@email.de'});
+    // const user = await userRepository.getByEmail({email: 'rob@email.de'});
+
 
     // const result = await dynamoDB.query({
     //   TableName: 'MyApp',
@@ -43,11 +104,27 @@ const main = async () => {
     // }).promise();
     //
     // console.log(result.Items.map(item => DynamoDB.Converter.unmarshall(item)));
-    console.log(user);
+    // console.log(user);
   } catch (e) {
     console.error(e);
   }
 
+};
+
+const createExpTag = attrIndexRef => (strings: ReadonlyArray<string>, ...attributes: ReadonlyArray<string>) => {
+  const startIndex = attrIndexRef.index;
+  const createPlaceholder = index => `:attr${index}`;
+  attrIndexRef.index = attrIndexRef.index + attributes.length;
+  return {
+    KeyConditionExpression: strings
+      .filter(str => !!str)
+      .reduce((acc, str, index) => acc + str + createPlaceholder(index + startIndex), ''),
+    ExpressionAttributeValues: attributes
+      .reduce((acc, attr, index) => ({
+        ...acc,
+        [createPlaceholder(index + startIndex)]: attr,
+      }), {}),
+  };
 };
 
 const createRepository = (entityModel: any, tableName: string, queries: any) => Object
@@ -75,11 +152,23 @@ createRepository(Object, 'tableName', {
   getByEmail: ({email}) => ({
     indexName: 'GSI1',
     keyConditionExpression: 'firstKey = :firstKey AND begins_with(secondKey, :partialSecondKey)',
-    expressionAttributeValues: {
-
-    }
+    expressionAttributeValues: {}
   })
 });
+
+const entitySchema = {
+  id: {
+    type: 'string',
+  },
+  email: {
+    type: 'string',
+  },
+  documents: {
+    type: 'Document',
+    isArray: true,
+    associate: (item, otherItem) => true,
+  },
+} as const;
 
 const getByEmail = ({email}) => dynamoDB.query({
   TableName: 'MyApp',
