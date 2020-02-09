@@ -1,104 +1,44 @@
-class User {
-}
+import { Type } from './utils';
 
-class Dokument {
+export interface Reference {
+  foreignKey: string;
+  model: string;
 }
-
-class SharedDocument {
+export interface Association {
+  target: string;
+  through?: string;
+  key: string;
+  foreignKey: string;
+  type: 'belongsToMany' | 'hasMany' | 'hasOne' | 'belongsTo';
 }
-
-export const schemas = {
-  SharedDocument: {
-    entityClass: SharedDocument,
-    primaryKeys: ['documentId', 'userId'],
-    references: [
-      {foreignKey: 'documentId', model: 'Document'},
-      {foreignKey: 'userId', model: 'User'},
-    ],
-    attributes: [
-      {key: 'shareState'},
-    ],
-  },
-  User: {
-    model: 'User',
-    entityClass: User,
-    primaryKeys: ['id'],
-    associations: [
-      {
-        target: 'Document',
-        key: 'documents',
-        foreignKey: 'userId',
-        type: 'hasMany',
-      },
-      {
-        target: 'Book',
-        key: 'writtenBooks',
-        foreignKey: 'authorId',
-        type: 'hasMany',
-      },
-      {
-        target: 'Book',
-        key: 'proofedBooks',
-        foreignKey: 'proofReaderId',
-        type: 'hasMany',
-      },
-      {
-        target: 'Document',
-        through: 'SharedDocument',
-        key: 'sharedDocuments',
-        foreignKey: 'userId',
-        type: 'belongsToMany',
-      }
-    ],
-    attributes: [
-      {key: 'id'},
-      {key: 'email'},
-    ],
-  },
-  Document: {
-    model: 'Document',
-    entityClass: Dokument,
-    primaryKeys: ['id'],
-    references: [
-      {
-        model: 'User',
-        foreignKey: 'userId',
-      }
-    ],
-    // associations: {
-    //   SharedDocument: [
-    //     {
-    //       key: 'sharedWith',
-    //       foreignKey: 'documentId',
-    //       type: 'belongsToMany',
-    //     }
-    //   ],
-    // },
-    attributes: [
-      {key: 'id'},
-      {key: 'userId'},
-      {key: 'filename'},
-    ],
-  },
-  Book: {
-    model: 'Book',
-    primaryKeys: ['id'],
-    references: [
-      {
-        model: 'User',
-        foreignKey: 'authorId',
-      },
-      {
-        model: 'User',
-        foreignKey: 'proofReaderId',
-      }
-    ],
-    // associations: {},
-    attributes: [
-      {key: 'id'},
-      {key: 'authorId'},
-      {key: 'proofReaderId'},
-      {key: 'title'},
-    ],
-  }
+export interface Schema<TClassRef, TAttributes extends Attributes> {
+  model: string;
+  classRef?: TClassRef;
+  primaryKeys: string[];
+  attributes: TAttributes;
+  references?: Reference[];
+  associations?: Association[];
+}
+type AttributeType = 'string' | 'boolean' | 'number' | Type;
+export interface Attribute {
+  type: AttributeType;
+  array?: boolean;
+}
+export type Attributes = {
+  [key: string]: Attribute | AttributeType;
 };
+
+export type Schemas = {
+  [model: string]: Schema<any, any>;
+};
+export type EntityTypeFromSchema<TSchema extends Schema<any, any>> = {
+  [TAttrKey in keyof TSchema['attributes']]: EntityAttrType<TSchema['attributes'][TAttrKey]>;
+};
+export type EntityTypeFromAttributes<TAttributes extends Attributes> = {
+  [TAttrKey in keyof TAttributes]: EntityAttrType<TAttributes[TAttrKey]>;
+};
+type EntityAttrType<T> = T extends {type: 'string', array: true}
+  ? string[]
+  : T extends 'string' | {type: 'string'}
+    ? string
+    : any
