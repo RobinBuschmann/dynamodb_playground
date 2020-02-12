@@ -12,6 +12,7 @@ interface CreateQueryOptions {
   indexName?: string;
   keyConditionExpression: string;
   filterExpression?: string;
+  expressionAttributeNames?: { [attributeKey: string]: string };
   expressionAttributeValues: { [attributeKey: string]: string };
   multi: boolean;
   associations?: AssociationOption[];
@@ -33,7 +34,7 @@ interface RepositoryOptions<TClassRef, TAttributes extends Attributes> extends P
 
 type Repository<TEntity, TQueries extends CreateQueriesOptions> = {
   [TQueryKey in keyof TQueries]: (
-    params: Parameters<TQueries[TQueryKey]>[0],
+    ...params: Parameters<TQueries[TQueryKey]>
   ) => ReturnType<TQueries[TQueryKey]>['multi'] extends false ? Promise<TEntity> : Promise<TEntity[]>;
 };
 
@@ -90,6 +91,7 @@ const query = ({ dynamoDB, multi, target, schemas, ...options }: QueryOptions) =
       FilterExpression: options.filterExpression,
       KeyConditionExpression: options.keyConditionExpression,
       ExpressionAttributeValues: DynamoDB.Converter.marshall(options.expressionAttributeValues),
+      ExpressionAttributeNames: options.expressionAttributeNames,
     })
     .promise()
     .then(result => mapAndAssociate({ items: result.Items, multi, target, schemas }));
