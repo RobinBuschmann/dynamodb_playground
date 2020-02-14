@@ -37,8 +37,10 @@ export type EntityTypeFromSchema<TSchema extends Schema<any, any>> = {
 export type EntityTypeFromAttributes<TAttributes extends Attributes> = {
   [TAttrKey in keyof TAttributes]: EntityAttrType<TAttributes[TAttrKey]>;
 };
-type EntityAttrType<T> = T extends {type: 'string', array: true}
+type EntityAttrType<T> = T extends { type: 'string'; array: true }
   ? string[]
-  : T extends 'string' | {type: 'string'}
-    ? string
-    : any
+  : T extends 'string' | { type: 'string' }
+  ? string
+  : any;
+
+export const createSchema = <TSchema extends Schema<any, any>>(schema: TSchema) => schema;

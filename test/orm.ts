@@ -51,6 +51,22 @@ export const deleteTable = () =>
     })
     .promise();
 
+export const find = () =>
+  dynamoDB
+    .query({
+      TableName: tableName,
+      KeyConditionExpression: 'firstKey = :firstKey AND begins_with(secondKey, :secondKey)',
+      FilterExpression: 'vorgangId = :vorgangId OR attribute_not_exists(vorgangId)',
+      ExpressionAttributeValues: DynamoDB.Converter.marshall({
+        ':firstKey': 'USER#1',
+        ':secondKey': 'DOCUMENT',
+        ':vorgangId': '1',
+      }),
+      Limit: 6,
+    })
+    .promise()
+    .then(result => [result.Items.map(item => DynamoDB.Converter.unmarshall(item)), result.LastEvaluatedKey]);
+
 export const createTable = () =>
   dynamoDB
     .createTable({

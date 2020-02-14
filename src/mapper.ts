@@ -28,12 +28,12 @@ export const mapAll = (itemList: ItemList, schemas, target) =>
 
 export const mapOne = (entry, schema) => {
   const instance = schema.classRef ? new schema.classRef() : {};
-  const values = Object.entries(schema.attributes).reduce(
-    (acc, [key, attr]: [any, any]) => ({
-      ...acc,
-      [key]: entry[attr.field || key],
-    }),
-    {},
-  );
+  const values = Object.entries(schema.attributes).reduce((acc, [key, attr]: [any, any]) => {
+    const value = entry[attr.field || key];
+    if (value !== undefined) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
   return Object.assign(instance, values);
 };

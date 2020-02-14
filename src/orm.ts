@@ -1,7 +1,7 @@
 import { DynamoDB } from 'aws-sdk';
 
 import { repositoryCreatorFactory } from './repositories';
-import {Schema, Schemas} from './schemas';
+import { Schema, Schemas } from './schemas';
 
 interface ORMOptions {
   dynamoDBOptions?: DynamoDB.Types.ClientConfiguration;
@@ -18,7 +18,7 @@ export const createORM = ({ dynamoDBOptions, ...options }: ORMOptions = {}) => {
   const dynamoDB = new DynamoDB(dynamoDBOptions);
   const createRepository = repositoryCreatorFactory({ dynamoDB, ...mergedOptions });
 
-  const addSchema = (schema: Schema<any, any>) => mergedOptions.schemas[schema.model] = schema;
+  const addSchema = (schema: Schema<any, any>) => (mergedOptions.schemas[schema.model] = schema);
 
   return { createRepository, dynamoDB, addSchema };
 };

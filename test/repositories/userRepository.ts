@@ -20,15 +20,16 @@ export const userRepository = orm.createRepository(userSchema, {
       },
       multi: false,
     } as const),
-  findAll: () => ({
-    indexName: 'GSI2',
-    keyConditionExpression: '#model = :model',
-    expressionAttributeValues: {
-      ':model': `User`,
-    },
-    expressionAttributeNames: {
-      '#model': '__model',
-    },
-    multi: true,
-  } as const),
+  findAll: () =>
+    ({
+      indexName: 'GSI2',
+      keyConditionExpression: '#model = :model',
+      expressionAttributeValues: {
+        ':model': `User`,
+      },
+      expressionAttributeNames: {
+        '#model': '__model',
+      },
+      multi: true,
+    } as const),
 });

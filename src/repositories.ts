@@ -5,7 +5,7 @@ import { associate } from './associations';
 import { Type } from './utils';
 import { Attributes, EntityTypeFromAttributes, EntityTypeFromSchema, Schema } from './schemas';
 
-type AssociationOption = [string, ...string[]] | [Type, ...string[]];
+type AssociationOption = readonly [string, ReadonlyArray<string>] | readonly [Type, ReadonlyArray<string>];
 type CreateQueryOptionsGetter = (params: object) => CreateQueryOptions;
 
 interface CreateQueryOptions {
@@ -15,7 +15,7 @@ interface CreateQueryOptions {
   expressionAttributeNames?: { [attributeKey: string]: string };
   expressionAttributeValues: { [attributeKey: string]: string };
   multi: boolean;
-  associations?: AssociationOption[];
+  associations?: ReadonlyArray<AssociationOption>;
 }
 
 interface CreateQueriesOptions {
@@ -45,7 +45,7 @@ type EntityType<TClassRef extends Type, TAttributes extends Attributes> = TClass
 export const repositoryCreatorFactory = (repositoryCreatorOptions: RepositoryCreatorOptions) => <
   TAttributes extends Attributes,
   TQueries extends CreateQueriesOptions,
-  TClassRef extends Type = undefined,
+  TClassRef extends Type = undefined
 >(
   repositoryOptions: RepositoryOptions<TClassRef, TAttributes>,
   queries: TQueries,
@@ -79,6 +79,7 @@ export const repositoryCreatorFactory = (repositoryCreatorOptions: RepositoryCre
 interface QueryOptions extends CreateQueryOptions {
   dynamoDB: DynamoDB;
   tableName: string;
+  associations: any[];
   target: any;
   schemas: any;
 }
@@ -94,11 +95,36 @@ const query = ({ dynamoDB, multi, target, schemas, ...options }: QueryOptions) =
       ExpressionAttributeNames: options.expressionAttributeNames,
     })
     .promise()
-    .then(result => mapAndAssociate({ items: result.Items, multi, target, schemas }));
+    .then(result =>
+      mapAndAssociate({
+        items: result.Items,
+        multi,
+        target,
+        schemas,
+        allowedAssociationKeyMap: new Map(options.associations),
+      }),
+    );
 };
 
-const mapAndAssociate = ({ items, multi, target, schemas }) => {
+interface PutItemOptions {
+  dynamoDB: DynamoDB;
+  tableName: string;
+  item: any;
+  target: any;
+  schemas: any;
+}
+
+const putItem = ({ dynamoDB, ...options }: PutItemOptions) =>
+  dynamoDB.putItem({
+    TableName: options.tableName,
+    Item: DynamoDB.Converter.marshall({
+      ...options.item,
+      __model: options.target.model,
+    }),
+  });
+
+const mapAndAssociate = ({ items, multi, target, schemas, allowedAssociationKeyMap }) => {
   const { entries, cache, targetInstances } = mapAll(items, schemas, target);
-  associate({ entries, cache, schemas });
+  associate({ entries, cache, schemas, allowedAssociationKeyMap });
   return multi ? targetInstances : targetInstances[0];
 };
