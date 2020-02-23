@@ -54,15 +54,17 @@ export const belongsToMany = ({ instance, association, source, schemas, cache })
   const target = schemas[association.target];
   const through = schemas[association.through];
   const primaryKey = getPrimaryKey({ source });
-  const throughInstances = cache.get(
-    createIdentifier(source.model, association.foreignKey, instance[primaryKey], through.model),
-  );
-  throughInstances?.forEach(throughInstance => {
+  const throughIdentifier = createIdentifier(through.model, association.foreignKey, instance[primaryKey], source.model);
+  const throughInstances = cache.get(throughIdentifier);
+  throughInstances?.map(throughInstance => {
     const foreignKey = getForeignKey({ source: through, target });
     const targetInstance = cache.get(createIdentifier(target.model, throughInstance[foreignKey]));
     if (targetInstance) {
       targetInstance[through.model] = throughInstance;
-      instance[association.key] = targetInstance;
+      if (!Array.isArray(instance[association.key])) {
+        instance[association.key] = [];
+      }
+      instance[association.key].push(targetInstance);
     }
   });
 };

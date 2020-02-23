@@ -27,6 +27,6 @@ export const getPrimaryKey = ({ source }) => {
 };
 
 export const getForeignKey = ({ source, target }) => {
-  const [foreignKey] = source.references.filter(ref => ref.model === target.model);
-  return foreignKey;
+  const [reference] = source.references.filter(ref => ref.model === target.model);
+  return reference.foreignKey;
 };

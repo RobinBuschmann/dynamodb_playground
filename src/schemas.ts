@@ -13,6 +13,7 @@ export interface Association {
 }
 export interface Schema<TClassRef, TAttributes extends Attributes> {
   model: string;
+  modelKeyIndexName?: string;
   classRef?: TClassRef;
   primaryKeys: string[];
   attributes: TAttributes;
@@ -41,6 +42,14 @@ type EntityAttrType<T> = T extends { type: 'string'; array: true }
   ? string[]
   : T extends 'string' | { type: 'string' }
   ? string
+  : T extends { type: 'number'; array: true }
+  ? number[]
+  : T extends 'number' | { type: 'number' }
+  ? number
+  : T extends { type: 'boolean'; array: true }
+  ? boolean[]
+  : T extends 'boolean' | { type: 'boolean' }
+  ? boolean
   : any;
 
 export const createSchema = <TSchema extends Schema<any, any>>(schema: TSchema) => schema;
